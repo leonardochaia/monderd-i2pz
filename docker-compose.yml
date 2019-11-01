@@ -1,0 +1,63 @@
+version: "3"
+
+networks:
+  monero:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+
+services:
+  monerod:
+    image: lchaia/monerod:v0.15
+    container_name: monerod
+    build:
+      context: ./monerod
+    volumes:
+      - /home/monerod/.bitmonero/:/home/monero/.bitmonero
+    ports:
+      - 18080:18080
+      - 18089:18089
+    networks:
+      - monero
+    command:
+      - "--non-interactive"
+      - "--restricted-rpc"
+      - "--rpc-bind-ip=0.0.0.0"
+      - "--rpc-bind-port=18089"
+      - "--confirm-external-bind"
+      - "--max-concurrency=4"
+      - "--public-node"
+      - '--anonymous-inbound=<your-i2p-addr>.b32.i2p,0.0.0.0:8061'
+      - "--tx-proxy=i2p,172.16.238.10:8060"
+      - '--add-peer=dsc7fyzzultm7y6pmx2avu6tze3usc7d27nkbzs5qwuujplxcmzq.b32.i2p'
+      - '--log-level=1'
+
+    # user: root
+    # entrypoint: /bin/chown
+    # command:  monero:monero -R /home/monero/.bitmonero
+
+  i2pz:
+    image: lchaia/i2pz:v1.13
+    container_name: i2pz
+    build:
+      context: ./i2pz
+    volumes:
+      - /home/monerod/.i2p-zero:/home/i2pz/.i2p-zero
+    networks: 
+      monero: 
+        ipv4_address: 172.16.238.10
+    ports:
+      - 8060:8060
+      - 8061:8061
+      - 4444:4444
+      - 7657:7657
+      - 9150:9150
+      - 7654:7654
+      # Replace 12345 with random selected port, tcp+upd
+      - 12345:12345/tcp
+      - 12345:12345/udp
+    # command: i2pz:i2pz -R /home/i2pz
+    # user: root
+    # entrypoint: /bin/chown
+    # command:  i2pz:i2pz -R /home/i2pz/.i2p-zero
